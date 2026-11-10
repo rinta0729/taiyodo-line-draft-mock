@@ -1,0 +1,525 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex, nofollow">
+<title>太陽堂 LINE下書き</title>
+<style>
+/* 実物のサイドパネルの配色と文字を土台にした、作業画面そのものを見せるページ。左がいつもの画面、右が横に出る下書き。 */
+:root {
+  color-scheme: light;
+  --ink: #1f2a24;
+  --muted: #5a665f;
+  --rule: #d8ded9;
+  --page: #edf0ec;
+  --surface: #ffffff;
+  --soft: #f6f7f4;
+  --pri: #078a3e;
+  --pri-d: #066f33;
+  --pri-soft: #dff5e6;
+  --warn: #8a4b00;
+  --warn-bg: #fff4e5;
+  --warn-line: #efc27c;
+  --err: #b3261e;
+  --mark: #ffe9a8;
+  --font-body: "Hiragino Sans", "Hiragino Kaku Gothic ProN", "Yu Gothic", "Noto Sans JP", sans-serif;
+  --font-display: "Hiragino Sans", "Hiragino Kaku Gothic ProN", "Yu Gothic", "Noto Sans JP", sans-serif;
+}
+* { box-sizing: border-box; }
+html, body { margin: 0; }
+body { background: var(--page); color: var(--ink); font-family: var(--font-body); font-size: 14px; line-height: 1.65; }
+.wrap { max-width: 1240px; margin: 0 auto; padding: 24px 20px 48px; display: grid; gap: 18px; }
+button, textarea { font: inherit; color: inherit; }
+button { cursor: pointer; }
+button:focus-visible, textarea:focus-visible, summary:focus-visible { outline: 2px solid var(--pri); outline-offset: 1px; }
+[hidden] { display: none !important; }
+
+.top { display: grid; gap: 14px; }
+.eyebrow { margin: 0; font-size: 12px; font-weight: 700; color: var(--pri-d); }
+h1 { margin: 2px 0 4px; font-family: var(--font-display); font-size: 25px; line-height: 1.35; text-wrap: balance; }
+.lead { margin: 0; max-width: 70ch; color: var(--muted); }
+.steps { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; }
+.steps li { display: flex; gap: 8px; align-items: center; padding: 8px 10px; background: var(--surface); border: 1px solid var(--rule); border-radius: 8px; font-size: 13px; color: var(--muted); }
+.steps b { flex: none; width: 22px; height: 22px; display: grid; place-items: center; border-radius: 50%; background: var(--soft); border: 1px solid var(--rule); font-size: 12px; }
+.steps li.on { color: var(--ink); font-weight: 700; border-color: var(--pri); background: var(--pri-soft); }
+.steps li.on b { background: var(--pri); border-color: var(--pri); color: #fff; }
+
+.app { display: grid; grid-template-columns: 224px minmax(0, 1fr) 372px; height: 780px; background: var(--surface); border: 1px solid var(--rule); border-radius: 12px; overflow: hidden; }
+.tag { font-size: 11px; font-weight: 700; color: var(--muted); padding: 8px 12px; border-bottom: 1px solid var(--rule); background: var(--soft); }
+.list { border-right: 1px solid var(--rule); display: flex; flex-direction: column; min-height: 0; }
+.list .tag { flex: none; }
+.items { flex: 1; overflow-y: auto; min-height: 0; }
+.item { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 0 6px; width: 100%; text-align: left; border: 0; border-bottom: 1px solid var(--rule); background: transparent; padding: 10px 12px; }
+.item:hover { background: var(--soft); }
+.item[aria-current="true"] { background: var(--pri-soft); }
+.item .nm { font-weight: 700; font-size: 13px; }
+.item .tm { font-size: 11px; color: var(--muted); }
+.item .pv { grid-column: 1 / -1; font-size: 12px; color: var(--muted); display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+
+.chat { display: flex; flex-direction: column; min-width: 0; min-height: 0; }
+.chat-h { flex: none; padding: 10px 14px; font-weight: 700; border-bottom: 1px solid var(--rule); }
+.msgs { flex: 1; min-height: 0; overflow-y: auto; padding: 16px 14px; display: flex; flex-direction: column; gap: 10px; background: #e9eef0; }
+.b { max-width: 78%; padding: 8px 12px; border-radius: 14px; background: var(--surface); white-space: pre-wrap; overflow-wrap: anywhere; align-self: flex-start; }
+.b.me { background: #c9efd5; align-self: flex-end; }
+.composer { flex: none; border-top: 1px solid var(--rule); padding: 10px 12px; display: grid; gap: 6px; }
+#editor { width: 100%; min-height: 92px; resize: vertical; border: 1px solid var(--rule); border-radius: 8px; padding: 8px; background: var(--surface); }
+.send-row { display: flex; justify-content: space-between; align-items: center; gap: 10px; }
+.send-row small { color: var(--muted); font-size: 12px; }
+#send { flex: none; background: var(--pri); color: #fff; border: 1px solid var(--pri); border-radius: 6px; padding: 6px 20px; font-weight: 700; }
+#send:disabled { background: var(--soft); border-color: var(--rule); color: var(--muted); cursor: default; }
+
+.panel { border-left: 1px solid var(--rule); overflow-y: auto; min-height: 0; }
+.sp { padding: 12px; display: grid; gap: 10px; }
+.sp-h { display: flex; justify-content: space-between; align-items: center; }
+.sp-h h2 { margin: 0; font-size: 16px; }
+.linklike { border: 0; background: none; padding: 0; font-size: 12px; color: var(--pri-d); text-decoration: underline; }
+.card { background: var(--soft); border-radius: 8px; padding: 10px; }
+.sp h3 { font-size: 13px; margin: 0 0 6px; color: var(--muted); }
+.action { width: 100%; background: var(--pri); border: 1px solid var(--pri); color: #fff; font-weight: 700; padding: 10px; font-size: 15px; border-radius: 6px; }
+.action:hover:not(:disabled) { background: var(--pri-d); }
+.action:disabled { opacity: .55; cursor: default; }
+.hint { font-size: 12px; color: var(--muted); margin: 6px 0 0; }
+.status { margin-top: 6px; font-size: 13px; white-space: pre-wrap; }
+.status:empty { display: none; }
+.status.ok { color: var(--pri-d); }
+.status.err { color: var(--err); }
+.alert { background: var(--warn-bg); color: var(--warn); border: 1px solid var(--warn-line); border-radius: 6px; padding: 8px; }
+.meta { font-size: 13px; }
+.badge { display: inline-block; background: #e8ecfa; border-radius: 10px; padding: 0 8px; font-size: 12px; }
+.muted { color: var(--muted); }
+.small { font-size: 12px; }
+.result { display: grid; gap: 8px; }
+.draft { border: 1px solid var(--rule); border-radius: 8px; padding: 8px; }
+.draft + .draft { margin-top: 8px; }
+.draft .lb { font-size: 12px; color: var(--muted); margin-bottom: 4px; }
+.draft textarea { width: 100%; min-height: 188px; border: 1px solid var(--rule); border-radius: 6px; padding: 6px; resize: vertical; background: var(--surface); }
+.row { display: flex; gap: 6px; align-items: center; margin-top: 6px; flex-wrap: wrap; }
+.row button { border-radius: 6px; border: 1px solid var(--rule); background: var(--surface); padding: 6px 10px; }
+.row button.ins { border-color: var(--pri); color: var(--pri-d); font-weight: 700; }
+.row .msg { font-size: 12px; flex-basis: 100%; }
+.sp ul { padding-left: 18px; margin: 4px 0; }
+details summary { cursor: pointer; font-size: 13px; color: var(--muted); }
+.ex li { margin-bottom: 6px; font-size: 12px; }
+.note { font-size: 12px; color: var(--muted); margin: 4px 0; }
+.phrases { display: flex; flex-wrap: wrap; gap: 6px; }
+.phrases > button { border-radius: 6px; border: 1px solid var(--rule); background: var(--surface); padding: 6px 10px; }
+.phrases > div { width: 100%; }
+.foot { font-size: 12px; color: var(--muted); margin: 0; }
+
+.sheet { background: var(--surface); border: 1px solid var(--rule); border-radius: 12px; padding: 16px 18px; }
+.sheet h2 { margin: 0 0 8px; font-size: 16px; text-wrap: balance; }
+.out { display: grid; grid-template-columns: minmax(0, 1.5fr) minmax(0, 1fr); gap: 20px; }
+.line { display: grid; grid-template-columns: 62px minmax(0, 1fr); gap: 6px; padding: 5px 0; border-top: 1px solid var(--rule); font-size: 13px; }
+.line:first-child { border-top: 0; }
+.line .who { color: var(--muted); font-size: 12px; }
+.line .tx { white-space: pre-wrap; overflow-wrap: anywhere; }
+mark { background: var(--mark); color: inherit; padding: 0 2px; border-radius: 3px; }
+.sheet ul { margin: 0; padding-left: 18px; }
+.sheet li + li { margin-top: 3px; }
+.sheet p { margin: 0 0 8px; }
+.scope { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; }
+.scope .sheet { padding: 14px 16px; }
+.scope h2 { font-size: 15px; }
+.state { display: inline-block; font-size: 11px; font-weight: 700; padding: 0 6px; border-radius: 4px; background: var(--warn-bg); color: var(--warn); margin-left: 4px; white-space: nowrap; }
+
+@media (max-width: 1080px) {
+  .app { grid-template-columns: minmax(0, 1fr) 340px; grid-template-rows: auto minmax(0, 1fr); height: 860px; }
+  .list { grid-column: 1 / -1; border-right: 0; border-bottom: 1px solid var(--rule); }
+  .items { display: flex; overflow-x: auto; overflow-y: hidden; }
+  .item { flex: 0 0 176px; border-bottom: 0; border-right: 1px solid var(--rule); }
+  .scope { grid-template-columns: minmax(0, 1fr); }
+}
+@media (max-width: 720px) {
+  .wrap { padding: 16px 16px 40px; }
+  h1 { font-size: 21px; }
+  .steps { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .app { display: flex; flex-direction: column; height: auto; }
+  .msgs { max-height: 340px; min-height: 220px; }
+  .panel { border-left: 0; border-top: 1px solid var(--rule); overflow: visible; }
+  .out { grid-template-columns: minmax(0, 1fr); }
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="top">
+    <div>
+      <p class="eyebrow">太陽堂さま向け モック（見本）・会話はすべて架空です</p>
+      <h1>LINEの画面の横に、返信の下書きが出ます</h1>
+      <p class="lead">事務の方が押したときだけ下書きを作り、送るのは人です。下書きの文は、本番と同じ仕組みで2026年11月10日に架空の会話から作った、調整前の実際の出力です。このページからはどこにも送信されません。</p>
+    </div>
+    <ol class="steps" id="steps">
+      <li data-s="1"><b>1</b>会話を開く</li>
+      <li data-s="2"><b>2</b>「下書きを作る」を押す</li>
+      <li data-s="3"><b>3</b>直して「入力欄に入れる」</li>
+      <li data-s="4"><b>4</b>確かめて、人が「Send」を押す</li>
+    </ol>
+  </header>
+
+  <main class="app">
+    <section class="list" aria-label="トーク一覧">
+      <div class="tag">いつものLINEの画面（イメージ）</div>
+      <div class="items" id="items"></div>
+    </section>
+
+    <section class="chat" aria-label="開いている会話">
+      <div class="chat-h" id="chatName"></div>
+      <div class="msgs" id="msgs"></div>
+      <div class="composer">
+        <label class="small muted" for="editor">入力欄</label>
+        <textarea id="editor" placeholder="ここに下書きが入ります。そのまま手で書くこともできます。"></textarea>
+        <div class="send-row">
+          <small>見本なので、Sendを押しても誰にも届きません。</small>
+          <button id="send" type="button">Send</button>
+        </div>
+      </div>
+    </section>
+
+    <aside class="panel" aria-label="横に出る下書き">
+      <div class="tag">横に出る下書き（今回作るもの）</div>
+      <div class="sp">
+        <div class="sp-h">
+          <h2>LINE下書き</h2>
+          <button class="linklike" id="openOptions" type="button">設定</button>
+        </div>
+
+        <div class="card">
+          <button id="makeDraft" class="action" type="button">下書きを作る（AI）</button>
+          <p class="hint">開いている会話の直近12件まで（電話・住所などは伏せて）AIに送ります。1回 約7円。</p>
+          <div id="status" class="status" role="status" aria-live="polite"></div>
+        </div>
+
+        <div id="result" class="result" hidden>
+          <div id="pharmacist" class="alert" hidden>体調・お薬に関わる内容です。<b>先生（薬剤師）に確認してから</b>送ってください。</div>
+          <div class="meta">分類: <span id="category" class="badge"></span> <span id="cost" class="small muted"></span></div>
+          <div>
+            <h3>下書き</h3>
+            <div id="drafts"></div>
+          </div>
+          <div id="cautionsBox" hidden>
+            <h3>気をつけること</h3>
+            <ul id="cautions"></ul>
+          </div>
+          <details id="examplesBox" hidden>
+            <summary>似た過去の例</summary>
+            <p class="note">ここは見本用の架空の文です。本番は、伏せ字にした過去のやり取り6,000組から出ます。</p>
+            <ul id="examples" class="ex"></ul>
+          </details>
+        </div>
+
+        <div class="card">
+          <h3>定型文（AIなし・0円）</h3>
+          <div id="phrases" class="phrases"></div>
+        </div>
+
+        <p class="foot">送信はしません。入力欄に入れたあと、<b>内容を確かめて「Send」はご自分で</b>押してください。</p>
+      </div>
+    </aside>
+  </main>
+
+  <section class="sheet">
+    <h2>「下書きを作る」を押すと、AIに渡る文</h2>
+    <div class="out">
+      <div id="outbound"></div>
+      <div>
+        <p class="small muted">黄色が自動で伏せた部分です。左の会話を切り替えると変わります。</p>
+        <ul>
+          <li>渡らないもの: 他の患者さんの会話、一覧に出るお名前、写真とスタンプ、CRMの情報</li>
+          <li>名前は「〜様」「〜と申します」の形だけ伏せます。「山田です」のような書き方と、体調の話は残ります</li>
+          <li>通る道: このパソコン、ALL RUNSのGoogleの中継、AI（Anthropic）。中継の記録に残すのは件数・分類・費用だけです</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <section class="scope" aria-label="本番の範囲">
+    <div class="sheet">
+      <h2>本番でできること</h2>
+      <ul>
+        <li>LINE公式の設定を変えずに使えます</li>
+        <li>開いている会話の直近12件を読み、下書きを1〜2案出します</li>
+        <li>分類と、気をつけることを一緒に出します</li>
+        <li>体調・お薬の話には「先生に確認してから」を出します</li>
+        <li>別の会話への入れ間違いと、書きかけの上書きを止めます</li>
+        <li>送るのはいつもの画面なので、LINEの追加料金はかかりません</li>
+      </ul>
+    </div>
+    <div class="sheet">
+      <h2>この形でしないこと</h2>
+      <ul>
+        <li>患者さんへの自動送信。Sendは必ず人が押します</li>
+        <li>メッセージが届いた時点での自動作成。押したときだけ作ります</li>
+        <li>返信漏れの通知。開いていない会話は読めません</li>
+        <li>入金や発送の状況を見て答えること。CRMにはつなぎません</li>
+        <li>写真やスタンプの中身を読むこと</li>
+        <li>スマホでの利用。パソコンのChromeだけです</li>
+      </ul>
+    </div>
+    <div class="sheet">
+      <h2>本番までに残っていること</h2>
+      <ul>
+        <li>本物のLINE画面で「入力欄に入れる」が効くかの確認<span class="state">未確認</span></li>
+        <li>文章の調整。不自然な書き出しと、会話にない約束を直します<span class="state">これから</span></li>
+        <li>HP・ブログの取り込みと、難しい質問40問の確認<span class="state">これから</span></li>
+        <li>体調の話をAIに渡してよいかの判断<span class="state">林さん</span></li>
+        <li>事務の方のパソコンへの導入<span class="state">これから</span></li>
+      </ul>
+    </div>
+  </section>
+</div>
+
+<script>
+(function () {
+  'use strict';
+  var DATA = {"scenarios": [{"id": "a", "name": "Aさん（架空）", "time": "10:42", "messages": [{"from": "patient", "text": "こんにちは。先月から漢方を飲み始めた者です。"}, {"from": "staff", "text": "こんにちは。お世話になっております。ご連絡ありがとうございます。"}, {"from": "patient", "text": "病院で血圧の薬をもらっているのですが、今の漢方と一緒に飲んでも大丈夫でしょうか。少し心配になって連絡しました。"}]}, {"id": "b", "name": "Bさん（架空）", "time": "10:15", "messages": [{"from": "patient", "text": "先日注文した分、本日振り込みました。よろしくお願いします。"}]}, {"id": "c", "name": "Cさん（架空）", "time": "09:58", "messages": [{"from": "patient", "text": "お世話になっております。今月分の漢方はいつ頃届きますか。"}, {"from": "staff", "text": "お世話になっております。確認いたしますので、少々お待ちくださいませ。"}, {"from": "patient", "text": "引っ越すので届け先を変えたいです。〒700-0001 岡山県岡山市北区架空町1-2-3 電話は090-0000-0000 です。"}]}, {"id": "d", "name": "Dさん（架空）", "time": "09:31", "messages": [{"from": "patient", "text": "昨日から動悸がして、さっきから息苦しい感じがあります。今の漢方は飲み続けて大丈夫ですか。"}]}, {"id": "e", "name": "Eさん（架空）", "time": "昨日", "messages": [{"from": "staff", "text": "本日発送いたしました。お届けまで今しばらくお待ちくださいませ。"}, {"from": "patient", "text": "届きました。ありがとうございました。"}]}, {"id": "f", "name": "Fさん（架空）", "time": "昨日", "messages": [{"from": "patient", "text": "前回と同じものをまたお願いしたいです。今回も同じ金額ですか。送料はかかりますか。"}]}], "outputs": {"a": {"category": "飲み方・副作用・飲み合わせ", "drafts": ["お世話になっております。\nご心配な点をご連絡いただき、ありがとうございます。\n病院のお薬と一緒に飲まれるとなると、気になりますよね。\n\n飲み合わせにつきましては、先生（薬剤師）に確認してからご連絡いたします。\n確認のため、以下を教えていただけますでしょうか。\n\n・病院で出ている血圧のお薬のお名前（お薬手帳の内容でも大丈夫です）\n・そのお薬を飲み始めた時期と、飲む回数・タイミング\n・ほかに飲んでいるお薬やサプリがあれば、そのお名前\n\nお手数をおかけしますが、よろしくお願いいたします。", "こんにちは。お世話になっております。\nご連絡ありがとうございます。\nご不安なお気持ち、よくわかります。\n\n先生（薬剤師）に確認のうえ、改めてご連絡いたしますね。\nお手数ですが、血圧のお薬のお名前（お薬手帳の写真でも結構です）と、飲むタイミングを教えていただけますでしょうか。\n\nよろしくお願いいたします。"], "cautions": ["飲み合わせの相談なので、先生に確認してから送ってください", "薬の続ける・やめる等の判断は書かないでください"], "needs_pharmacist": true, "cost_yen": 4.9}, "b": {"category": "振込・支払い", "drafts": ["お問い合わせいただきありがとうございます。\nお世話になっております。\n\nお振込みのご連絡をいただき、ありがとうございます。\n確認させていただきますね。\n\n発送の際は、改めてご連絡させていただきます。\nよろしくお願いいたします。", "こんにちは。お世話になっております。\nお振込みのご連絡ありがとうございます。\n確認いたしますね。\n発送の際に改めてご連絡いたします。\nよろしくお願いいたします。"], "cautions": ["入金はまだ確認していないので「確認できました」とは書かないでください", "発送日・到着日は約束しないでください"], "needs_pharmacist": false, "cost_yen": 2.3}, "c": {"category": "発送・お届け", "drafts": ["お問い合わせいただきありがとうございます。\nお引っ越しのため、お届け先の変更ですね。\n新しいご住所とお電話番号を承りました。\n\n今月分のお届けについては、発送の状況とあわせて確認いたしますので、少々お待ちくださいませ。\n確認でき次第、こちらのLINEからご連絡いたします。\nよろしくお願いいたします。", "こんにちは。お世話になっております。\nお届け先変更のご連絡をありがとうございます。\n新しいご住所・お電話番号、承りました。\n\nお届けの時期とあわせて確認のうえ、改めてご連絡いたします。\n今しばらくお待ちくださいませ。"], "cautions": ["発送日・到着日は約束しないでください", "すでに発送済みか、住所変更が間に合うか確認してから連絡を", "伏せ字の住所・電話番号は元の情報を確認し、推測で書かないでください", "新住所への切り替え時期（今月分から等）は〔要確認〕"], "needs_pharmacist": false, "cost_yen": 2.9}, "d": {"category": "飲み方・副作用・飲み合わせ", "drafts": ["お世話になっております。\nご連絡いただきありがとうございます。\n昨日から動悸があり、今は息苦しさもあるとのこと、ご不安な中でお知らせくださりありがとうございます。\n\n息苦しさがある時は、まずは早めに医療機関を受診なさってください。\n息苦しさが強くなる、胸が痛むなどの時は、ためらわず救急車（119）を呼んでください。\n\n漢方薬をお飲みいただいてよいかは、先生（薬剤師）に確認してからご連絡いたします。\n差し支えなければ、動悸や息苦しさがどのようなご様子か、ほかに飲んでいるお薬があるか、教えていただけますでしょうか。", "こんにちは。お世話になっております。\n息苦しさもおありとのこと、お辛いですね。\n\nまずは早めに医療機関を受診なさってください。\n苦しさが強い時は救急車（119）をお呼びください。\n\n漢方薬については、先生（薬剤師）に確認してからご連絡いたします。\nどうぞご無理なさらないでください。"], "cautions": ["息苦しさ・動悸があるため、早めの受診をすすめる文は必ず残してください", "漢方を続けてよいかは答えず、先生に確認してから送ってください", "返信は急ぎで。先生への共有もすぐお願いします"], "needs_pharmacist": true, "cost_yen": 3.2}, "e": {"category": "発送・お届け", "drafts": ["お問い合わせいただきありがとうございます。\nお世話になっております。\n\n無事にお手元に届いたようで安心いたしました。\nお受け取りのご連絡をいただきありがとうございます。\n\n朝晩冷え込む日が増えてまいりましたので、どうぞお体に気をつけてお過ごしくださいね。\nよろしくお願いいたします。", "こんにちは。お世話になっております。\n\nお受け取りのご連絡ありがとうございます。\n無事に届いたようで良かったです。\n\n今後ともよろしくお願いいたします。"], "cautions": ["届いた品物が漢方薬か書かれていないため、品名は入れていません", "飲み方や続け方の指示は入れないでください"], "needs_pharmacist": false, "cost_yen": 1.7}, "f": {"category": "注文・再注文", "drafts": ["お世話になっております。\n再注文のご連絡をありがとうございます。\n\n前回と同じ内容でのご注文、承りました。\n金額と送料につきましては、確認のうえ改めてご連絡いたしますね。\n\nなお、念のためお届け先にお変わりがないかお教えいただけますでしょうか。\nご返信をお待ちしております。\nよろしくお願いいたします。", "こんにちは。お世話になっております。\nご注文のご連絡をありがとうございます。\n\n前回と同じものでご用意いたしますね。\n金額・送料を確認いたしまして、改めてご案内いたします。\n少々お待ちくださいませ。\nよろしくお願いいたします。"], "cautions": ["金額は〔要確認〕。前回と同額かどうか確認してから案内してください", "送料は〔要確認〕。会話に記載がないため決めつけないでください", "処方内容を変えるかは先生の判断。必要なら体調確認を先生に相談してください", "発送日は約束しないでください"], "needs_pharmacist": false, "cost_yen": 2.7}}, "examples": {"a": [{"month": "2026年9月", "q": "病院の薬と一緒に飲んでも問題ありませんか。", "a": "ご連絡ありがとうございます。先生に確認いたしますので、お薬のお名前を教えていただけますでしょうか。"}, {"month": "2026年3月", "q": "持病の薬があるのですが、漢方と併用できますか。", "a": "お世話になっております。お飲みのお薬について先生に確認のうえ、あらためてご連絡いたします。"}], "b": [{"month": "2026年8月", "q": "振り込みました。", "a": "ご連絡ありがとうございます。確認いたしますね。"}], "c": [{"month": "2026年6月", "q": "住所が変わりました。次回から新しい住所にお願いします。", "a": "ご連絡ありがとうございます。確認のうえ、あらためてご連絡いたします。"}], "d": [{"month": "2026年5月", "q": "飲み始めてからドキドキする気がします。", "a": "ご連絡ありがとうございます。先生に確認いたします。いつ頃からどのようなご様子か教えていただけますでしょうか。"}], "e": [{"month": "2026年10月", "q": "無事届きました。", "a": "ご連絡ありがとうございます。無事に届いて安心いたしました。"}], "f": [{"month": "2026年7月", "q": "前回と同じものをお願いします。", "a": "いつもありがとうございます。先生に確認のうえ、あらためてご案内いたします。"}]}, "phrases": [{"label": "振込確認します", "text": "こんにちは。お世話になっております。\nお振込みのご連絡ありがとうございます。\n確認いたしますので、少々お待ちくださいませ。"}, {"label": "届いたお礼", "text": "お世話になっております。\n無事にお手元に届いたとのこと、安心いたしました。\nご連絡ありがとうございます。\nまた何かございましたら、お気軽にご連絡くださいね。"}, {"label": "先生に確認します", "text": "ご連絡ありがとうございます。\nいただいた内容は、先生に確認のうえ、あらためてご連絡いたします。\n少しお時間をいただけますと幸いです。"}, {"label": "確認してご連絡", "text": "お問い合わせいただきありがとうございます。\nこちらで確認いたしまして、あらためてご連絡いたします。\n少々お待ちくださいませ。"}, {"label": "受け取りました", "text": "ご連絡ありがとうございます。\n内容、確かに承りました。"}]};
+
+  /* 実物の extension/mask.js と同じ規則（ブラウザ側の伏せ字） */
+  var DASH = '[-‐‑–—―ー−－]';
+  function maskBrowser(text) {
+    var t = String(text == null ? '' : text);
+    try { t = t.normalize('NFKC'); } catch (e) {}
+    t = t.replace(/[\w.+-]+@[\w-]+(\.[\w-]+)+/g, '[メール]');
+    t = t.replace(/〒\s*\d{3}\s*-?\s*\d{4}/g, '[郵便番号]');
+    t = t.replace(/\+81[\s-]?\d{1,4}[\s-]?\d{1,4}[\s-]?\d{3,4}/g, '[電話]');
+    t = t.replace(new RegExp('(^|[^0-9])0\\d{1,4}\\s?(?:' + DASH + '|\\(|\\s)?\\s?\\d{1,4}\\s?(?:' + DASH + '|\\)|\\s)?\\s?\\d{3,4}(?![0-9])', 'g'), '$1[電話]');
+    t = t.replace(new RegExp('(^|[^0-9' + DASH.slice(1, -1) + '])\\d{3}' + DASH + '\\d{4}(?![0-9])', 'g'), '$1[郵便番号]');
+    t = t.replace(/\d{8,}/g, '[番号]');
+    t = t.replace(/(東京都|北海道|大阪府|京都府|[一-龥]{2,3}県)[一-龥ぁ-んァ-ヶー0-9\-－‐ー丁目番地号の ]{2,40}/g, '[住所]');
+    t = t.replace(/[一-龥ァ-ヶー]{1,6}[市区郡][一-龥ァ-ヶーぁ-ん]{0,10}?\d{1,4}(?:(?:丁目|番地?|号|-|－|‐|ー|の)\d{0,4})+(?:号)?/g, '[住所]');
+    t = t.replace(/\d{1,4}丁目[\d\-－‐ー番地号の]*/g, '[住所]');
+    t = t.replace(/\d{1,4}号室/g, '[住所]');
+    return t;
+  }
+  /* 実物のGAS maskPersonal_ のうち、名前を伏せる規則 */
+  function maskNames(t) {
+    t = t.replace(/([一-龥々ァ-ヶーA-Za-z]{1,6}[ 　]?[一-龥々ァ-ヶーA-Za-z]{0,6})(様|さま|さん)/g, function (all, name, hon) {
+      return /^(客|患者|皆|主人|旦那|奥|家族|先生|子供|子|息子|娘|母|父|担当|スタッフ|事務|薬剤師|林|太陽堂|嶺耀堂|各位)$/.test(name) || /^(お客|患者|ご主人|ご家族|お子|お母|お父)/.test(name) ? all : '[名前]' + hon;
+    });
+    t = t.replace(/(^|\n|。|、|\s)([一-龥々]{1,3}[ 　]?[一-龥々]{1,3}|[ァ-ヶー]{2,8})(と申します|と言います|といいます)/g, '$1[名前]$3');
+    return t;
+  }
+
+  var REASONS = {
+    other_chat: '下書きを作った時と別の会話が開いています。この会話で、もう一度「下書きを作る」を押してください。',
+    has_text: '入力欄に書きかけの文があります。置き換えるなら、もう一度「入力欄に入れる」を押してください。',
+    empty: '文が空です。'
+  };
+
+  function $(id) { return document.getElementById(id); }
+  function el(tag, cls, text) {
+    var e = document.createElement(tag);
+    if (cls) e.className = cls;
+    if (text != null) e.textContent = text;
+    return e;
+  }
+
+  var byId = {};
+  var state = { current: DATA.scenarios[0].id, draftChat: null, busy: false, editors: {} };
+  DATA.scenarios.forEach(function (s) {
+    s.msgs = s.messages.slice();
+    byId[s.id] = s;
+    state.editors[s.id] = '';
+  });
+
+  function setStatus(text, kind) {
+    var s = $('status');
+    s.textContent = text || '';
+    s.className = 'status' + (kind ? ' ' + kind : '');
+  }
+
+  function syncStep() {
+    var step = 2;
+    if ($('editor').value.trim()) step = 4;
+    else if (state.draftChat === state.current) step = 3;
+    Array.prototype.forEach.call($('steps').children, function (li) {
+      li.classList.toggle('on', Number(li.getAttribute('data-s')) === step);
+    });
+    $('send').disabled = !$('editor').value.trim();
+  }
+
+  function renderList() {
+    var box = $('items');
+    box.textContent = '';
+    DATA.scenarios.forEach(function (s) {
+      var last = s.msgs[s.msgs.length - 1];
+      var b = el('button', 'item');
+      b.type = 'button';
+      b.setAttribute('aria-current', s.id === state.current ? 'true' : 'false');
+      b.appendChild(el('span', 'nm', s.name));
+      b.appendChild(el('span', 'tm', s.time));
+      b.appendChild(el('span', 'pv', last.text));
+      b.addEventListener('click', function () { selectConv(s.id); });
+      box.appendChild(b);
+    });
+  }
+
+  function appendMarked(parent, text) {
+    text.split(/(\[(?:電話|メール|郵便番号|住所|番号|名前)\])/).forEach(function (part, i) {
+      if (!part) return;
+      if (i % 2) parent.appendChild(el('mark', '', part));
+      else parent.appendChild(document.createTextNode(part));
+    });
+  }
+
+  function renderOutbound() {
+    var box = $('outbound');
+    box.textContent = '';
+    byId[state.current].msgs.slice(-12).forEach(function (m) {
+      var row = el('div', 'line');
+      row.appendChild(el('span', 'who', m.from === 'patient' ? '患者さん' : '太陽堂'));
+      var tx = el('span', 'tx');
+      appendMarked(tx, maskNames(maskBrowser(m.text)));
+      row.appendChild(tx);
+      box.appendChild(row);
+    });
+  }
+
+  function renderChat() {
+    var s = byId[state.current];
+    $('chatName').textContent = s.name;
+    var box = $('msgs');
+    box.textContent = '';
+    s.msgs.forEach(function (m) {
+      box.appendChild(el('div', 'b' + (m.from === 'staff' ? ' me' : ''), m.text));
+    });
+    box.scrollTop = box.scrollHeight;
+    $('editor').value = state.editors[state.current] || '';
+  }
+
+  function selectConv(id) {
+    state.current = id;
+    renderList();
+    renderChat();
+    renderOutbound();
+    syncStep();
+  }
+
+  function insertDraft(text, expectChat, force) {
+    if (expectChat && expectChat !== state.current) return { ok: false, reason: 'other_chat' };
+    if (!text.trim()) return { ok: false, reason: 'empty' };
+    var ed = $('editor');
+    if (ed.value.trim() && !force) return { ok: false, reason: 'has_text' };
+    ed.value = text;
+    state.editors[state.current] = text;
+    syncStep();
+    return { ok: true };
+  }
+
+  function draftCard(label, text, expectChat) {
+    var card = el('div', 'draft');
+    card.appendChild(el('div', 'lb', label));
+    var ta = document.createElement('textarea');
+    ta.value = text;
+    ta.id = 'd-' + Math.random().toString(36).slice(2, 9);
+    ta.setAttribute('aria-label', label);
+    card.appendChild(ta);
+    var row = el('div', 'row');
+    var ins = el('button', 'ins', '入力欄に入れる');
+    ins.type = 'button';
+    var copy = el('button', '', 'コピー');
+    copy.type = 'button';
+    var msg = el('span', 'msg');
+    row.appendChild(ins); row.appendChild(copy); row.appendChild(msg);
+    card.appendChild(row);
+    var force = false;
+    ta.addEventListener('input', function () { force = false; });
+    ins.addEventListener('click', function () {
+      var r = insertDraft(ta.value, expectChat, force);
+      if (r.ok) {
+        force = false;
+        msg.textContent = '入力欄に入れました。内容を確かめて、Sendはご自分で押してください。';
+        msg.style.color = '';
+      } else {
+        if (r.reason === 'has_text') force = true;
+        msg.textContent = REASONS[r.reason];
+        msg.style.color = 'var(--err)';
+      }
+    });
+    copy.addEventListener('click', function () {
+      function done(t) { msg.textContent = t; msg.style.color = ''; }
+      try {
+        navigator.clipboard.writeText(ta.value).then(function () { done('コピーしました。'); }, function () { ta.select(); done('選択しました。⌘C でコピーしてください。'); });
+      } catch (e) { ta.select(); done('選択しました。⌘C でコピーしてください。'); }
+    });
+    return card;
+  }
+
+  function renderResult(id) {
+    var res = DATA.outputs[id];
+    $('result').hidden = false;
+    $('pharmacist').hidden = !res.needs_pharmacist;
+    $('category').textContent = res.category || 'その他';
+    $('cost').textContent = typeof res.cost_yen === 'number' ? '（概算 ' + res.cost_yen + '円）' : '';
+    var d = $('drafts'); d.textContent = '';
+    (res.drafts || []).forEach(function (text, i) { d.appendChild(draftCard('案' + (i + 1), text, id)); });
+    var c = $('cautions'); c.textContent = '';
+    $('cautionsBox').hidden = !(res.cautions || []).length;
+    (res.cautions || []).forEach(function (t) { c.appendChild(el('li', '', t)); });
+    var x = $('examples'); x.textContent = '';
+    var ex = DATA.examples[id] || [];
+    $('examplesBox').hidden = !ex.length;
+    $('examplesBox').open = false;
+    ex.forEach(function (e) {
+      var li = el('li');
+      li.appendChild(el('div', 'muted', e.month + '・患者さん: ' + e.q));
+      li.appendChild(el('div', '', '太陽堂: ' + e.a));
+      x.appendChild(li);
+    });
+  }
+
+  function makeDraft() {
+    if (state.busy) return;
+    state.busy = true;
+    var btn = $('makeDraft');
+    btn.disabled = true;
+    setStatus('下書きを作っています…（本番は10〜30秒）');
+    var id = state.current;
+    setTimeout(function () {
+      state.draftChat = id;
+      renderResult(id);
+      setStatus('できました。直してから「入力欄に入れる」を押してください。', 'ok');
+      state.busy = false;
+      btn.disabled = false;
+      syncStep();
+    }, 1000);
+  }
+
+  function renderPhrases() {
+    var box = $('phrases');
+    var holder = el('div');
+    DATA.phrases.forEach(function (p) {
+      var b = el('button', '', p.label);
+      b.type = 'button';
+      b.addEventListener('click', function () {
+        holder.textContent = '';
+        holder.appendChild(draftCard('定型文: ' + p.label, p.text, ''));
+      });
+      box.appendChild(b);
+    });
+    box.appendChild(holder);
+  }
+
+  $('makeDraft').addEventListener('click', makeDraft);
+  $('openOptions').addEventListener('click', function () { setStatus('設定は管理者用の画面です。見本では開きません。'); });
+  $('editor').addEventListener('input', function () {
+    state.editors[state.current] = $('editor').value;
+    syncStep();
+  });
+  $('send').addEventListener('click', function () {
+    var text = $('editor').value;
+    if (!text.trim()) return;
+    byId[state.current].msgs.push({ from: 'staff', text: text });
+    state.editors[state.current] = '';
+    selectConv(state.current);
+  });
+
+  renderPhrases();
+  state.draftChat = state.current;
+  renderResult(state.current);
+  setStatus('できました。直してから「入力欄に入れる」を押してください。', 'ok');
+  selectConv(state.current);
+})();
+</script>
+</body>
+</html>
